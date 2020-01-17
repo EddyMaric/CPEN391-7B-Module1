@@ -35,18 +35,18 @@ module SerialIODecoder (
 
 // decoder for the 2nd UART 16550 chip (GPS Port) - Registers located between addresses 0xFF21 0210 - 0xFF21 021F 
 // so that they occupy same half of data bus on D15-D8 and ByteSelect_L = 0
-	
-// TODO – add your own Verilog code to produce an active high enable for the GPS UART
+		if((IOSelect_H == 1) && (Address[15:4] == 12'h021) && ByteSelect_L == 0)		// address = 0xFF21_0210 - hex FF21_021F
+			GPS_Port_Enable <= 1;		// enable the 2nd UART device
 
 // decoder for the 3rd UART 16550 chip (Bluetooth Port) - Registers located between addresses 0xFF21 0220 - 0xFF21 022F 
 // so that they occupy same half of data bus on D15-D8 and ByteSelect_L = 0
-	
-// TODO – add your own Verilog code to produce an active high enable for the Bluetooth UART
+		if((IOSelect_H == 1) && (Address[15:4] == 12'h022) && ByteSelect_L == 0)		// address = 0xFF21_0220 - hex FF21_022F
+			Bluetooth_Port_Enable <= 1;		// enable the 3rd UART device
 		
 // decoder for the 4th UART 16550 chip (TouchScreen Port) - Registers located between addresses 0xFF21 0230 - 0xFF21 023F 
 // so that they occupy same half of data bus on D15-D8 and ByteSelect_L = 0
-	
-// TODO – add your own Verilog code to produce an active high enable for the TouchScreen UART
+		if((IOSelect_H == 1) && (Address[15:4] == 12'h023) && ByteSelect_L == 0)		// address = 0xFF21_0230 - hex FF21_023F
+			TouchScreen_Port_Enable <= 1;		// enable the 4th UART device
 
 
 	end

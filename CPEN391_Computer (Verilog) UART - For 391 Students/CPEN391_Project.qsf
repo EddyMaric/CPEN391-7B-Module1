@@ -8,7 +8,6 @@ set_global_assignment -name DEVICE 5CSEMA5F31C6
 set_global_assignment -name TOP_LEVEL_ENTITY MyComputer_Verilog
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
-set_global_assignment -name SDC_FILE CPEN391_Soc.sdc
 
 #============================================================
 # ADC
@@ -381,22 +380,6 @@ set_location_assignment PIN_D11 -to VGA_VS
 
 set_global_assignment -name LAST_QUARTUS_VERSION 15.0.0
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
-set_global_assignment -name VHDL_FILE HexTo7SegmentDisplay.vhd
-set_global_assignment -name VHDL_FILE ColourPallette_2PortRam.vhd
-set_global_assignment -name VHDL_FILE VideoRamFrameBuffer.vhd
-set_global_assignment -name BDF_FILE Graphics_and_Video_Controller.bdf
-set_global_assignment -name BDF_FILE GraphicsFrameBufferMemory.bdf
-set_global_assignment -name QIP_FILE VGA_CLOCK_GEN.qip
-set_global_assignment -name SIP_FILE VGA_CLOCK_GEN.sip
-set_global_assignment -name BDF_FILE GPIO_Port_Connections.bdf
-set_global_assignment -name VHDL_FILE TriStateOutput.vhd
-set_global_assignment -name VERILOG_FILE GraphicsController_Verilog.v
-set_global_assignment -name VERILOG_FILE GraphicsLCD_Controller_verilog.v
-set_global_assignment -name VERILOG_FILE RamAddressMapper_Verilog.v
-set_global_assignment -name VERILOG_FILE VGADataMux_Verilog.v
-set_global_assignment -name QIP_FILE CPEN391_Computer/synthesis/CPEN391_Computer.qip
-set_global_assignment -name VERILOG_FILE CPEN391_Computer/synthesis/CPEN391_Computer.v
-set_global_assignment -name VERILOG_FILE MyComputer_Verilog.v
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
@@ -972,6 +955,48 @@ set_instance_assignment -name PACKAGE_SKEW_COMPENSATION OFF -to HPS_DDR3_RESET_N
 set_instance_assignment -name PACKAGE_SKEW_COMPENSATION OFF -to HPS_DDR3_CK_P
 set_instance_assignment -name PACKAGE_SKEW_COMPENSATION OFF -to HPS_DDR3_CK_N
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to VGA_*
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/counters/gh_counter_down_ce_ld_tc.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/custom_MSI/gh_edge_det_XCD.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/registers_gates/gh_shift_reg_se_sl.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/counters/gh_counter_down_ce_ld.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/custom_MSI/gh_gray2binary.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/custom_MSI/gh_binary2gray.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/custom_MSI/gh_parity_gen_Serial.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/registers_gates/gh_shift_reg_PL_sl.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/counters/gh_counter_integer_down.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/custom_MSI/gh_baud_rate_gen.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/registers_gates/gh_DECODE_3to8.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/registers_gates/gh_register_ce.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/custom_MSI/gh_edge_det.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_vhdl_lib_v3_48/registers_gates/gh_jkff.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_uart_Tx_8bit.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_uart_Rx_8bit.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_uart_16550_wb_wrapper.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_uart_16550_amba_apb_wrapper.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_uart_16550.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_fifo_async16_sr.vhd
+set_global_assignment -name VHDL_FILE ../Exercises/1.3/UART_16550_Files/gh_fifo_async16_rcsr_wf.vhd
+set_global_assignment -name SDC_FILE CPEN391_Soc.sdc
+set_global_assignment -name VHDL_FILE HexTo7SegmentDisplay.vhd
+set_global_assignment -name VHDL_FILE ColourPallette_2PortRam.vhd
+set_global_assignment -name VHDL_FILE VideoRamFrameBuffer.vhd
+set_global_assignment -name BDF_FILE Graphics_and_Video_Controller.bdf
+set_global_assignment -name BDF_FILE GraphicsFrameBufferMemory.bdf
+set_global_assignment -name QIP_FILE VGA_CLOCK_GEN.qip
+set_global_assignment -name SIP_FILE VGA_CLOCK_GEN.sip
+set_global_assignment -name BDF_FILE GPIO_Port_Connections.bdf
+set_global_assignment -name VHDL_FILE TriStateOutput.vhd
+set_global_assignment -name VERILOG_FILE GraphicsController_Verilog.v
+set_global_assignment -name VERILOG_FILE GraphicsLCD_Controller_verilog.v
+set_global_assignment -name VERILOG_FILE RamAddressMapper_Verilog.v
+set_global_assignment -name VERILOG_FILE VGADataMux_Verilog.v
+set_global_assignment -name QIP_FILE CPEN391_Computer/synthesis/CPEN391_Computer.qip
+set_global_assignment -name VERILOG_FILE CPEN391_Computer/synthesis/CPEN391_Computer.v -library CPEN391_Computer
+set_global_assignment -name VERILOG_FILE MyComputer_Verilog.v
 set_global_assignment -name VERILOG_FILE SerialIODecoder_Verilog.v
 set_global_assignment -name BDF_FILE OnChipSerialIO.bdf
 set_global_assignment -name VERILOG_FILE SerialIODecoder.v

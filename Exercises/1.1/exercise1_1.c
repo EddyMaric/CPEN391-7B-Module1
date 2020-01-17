@@ -24,7 +24,7 @@
 #define HEX4_5      (volatile unsigned int *)(0xFF200050)
 
 
-void main(void)
+int main(void)
 {
     int pushbuttons;
     int hex_0_1_to_write;
@@ -60,6 +60,8 @@ void main(void)
         }
 
         *HEX0_1 = hex_0_1_to_write;
-        *HEX2_3 = hex_2_3_to_write;```
+        *HEX2_3 = hex_2_3_to_write;
     }
+
+    return 0;
 }

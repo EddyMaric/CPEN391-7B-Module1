@@ -1,13 +1,13 @@
-Analysis & Synthesis Status : Successful - Thu Jan 16 14:37:11 2020
+Analysis & Synthesis Status : Successful - Thu Jan 16 17:29:54 2020
 Quartus II 64-Bit Version : 15.0.0 Build 145 04/22/2015 SJ Full Version
 Revision Name : CPEN391_Project
 Top-level Entity Name : MyComputer_Verilog
 Family : Cyclone V
 Logic utilization (in ALMs) : N/A
-Total registers : 6507
+Total registers : 7495
 Total pins : 338
 Total virtual pins : 0
-Total block memory bits : 3,183,232
+Total block memory bits : 3,184,064
 Total DSP Blocks : 0
 Total HSSI RX PCSs : 0
 Total HSSI PMA RX Deserializers : 0

@@ -1,5 +1,5 @@
 
-C:/Users/emari/Documents/CPEN 391/Module 1/Exercises/1.1/exercise1_1.axf:     file format elf32-littlearm
+C:/Users/emari/Documents/CPEN 391/git/CPEN391-7B-Module1/Exercises/1.1/exercise1_1.axf:     file format elf32-littlearm
 
 
 Disassembly of section .text:
@@ -168,7 +168,7 @@ Disassembly of section .text:
 #define HEX4_5      (volatile unsigned int *)(0xFF200050)
 
 
-void main(void)
+int main(void)
 {
      25c:	e92d4008 	push	{r3, lr}
     int pushbuttons;
