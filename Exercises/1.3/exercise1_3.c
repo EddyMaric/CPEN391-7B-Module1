@@ -56,16 +56,6 @@ void Init_RS232(void)
     RS232_FifoControlReg = 0;
 }
 
-// the following function polls the UART to determine if any character
-// has been received. It doesn't wait for one, or read it, it simply tests
-// to see if one is available to read from the FIFO
-int RS232TestForReceivedData(void)
-{
- // if RS232_LineStatusReg bit 0 is set to 1
- //return TRUE, otherwise return FALSE
-    return ((RS232_LineStatusReg >> RS232_LineStatusReg_DataReady) & 1) == 1;
-}
-
 int putcharRS232(int c)
 {
  // wait for Transmitter Holding Register bit (5) of line status register to be '1'
@@ -76,11 +66,6 @@ int putcharRS232(int c)
  // write character to Transmitter fifo register
     RS232_TransmitterFifo = c;
 
- //
-    while(!RS232TestForReceivedData()) {
-        // Wait to receive the data
-    }
-
  // return the character we printed
     return c;
 }
@@ -88,12 +73,22 @@ int putcharRS232(int c)
 int getcharRS232( void )
 {
  // wait for Data Ready bit (0) of line status register to be '1'
-    while(((RS232_LineStatusReg >> RS232_LineStatusReg_DataReady) & 1) == 0) {
+    while(!RS232TestForReceivedData()) {
     }
 
  // read new character from ReceiverFiFo register
  // return new character
     return RS232_ReceiverFifo;
+}
+
+// the following function polls the UART to determine if any character
+// has been received. It doesn't wait for one, or read it, it simply tests
+// to see if one is available to read from the FIFO
+int RS232TestForReceivedData(void)
+{
+ // if RS232_LineStatusReg bit 0 is set to 1
+ //return TRUE, otherwise return FALSE
+    return ((RS232_LineStatusReg >> RS232_LineStatusReg_DataReady) & 1) == 1;
 }
 
 //
