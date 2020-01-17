@@ -56,6 +56,16 @@ void Init_RS232(void)
     RS232_FifoControlReg = 0;
 }
 
+// the following function polls the UART to determine if any character
+// has been received. It doesn't wait for one, or read it, it simply tests
+// to see if one is available to read from the FIFO
+int RS232TestForReceivedData(void)
+{
+ // if RS232_LineStatusReg bit 0 is set to 1
+ //return TRUE, otherwise return FALSE
+    return ((RS232_LineStatusReg >> RS232_LineStatusReg_DataReady) & 1) == 1;
+}
+
 int putcharRS232(int c)
 {
  // wait for Transmitter Holding Register bit (5) of line status register to be '1'
@@ -81,16 +91,6 @@ int getcharRS232( void )
     return RS232_ReceiverFifo;
 }
 
-// the following function polls the UART to determine if any character
-// has been received. It doesn't wait for one, or read it, it simply tests
-// to see if one is available to read from the FIFO
-int RS232TestForReceivedData(void)
-{
- // if RS232_LineStatusReg bit 0 is set to 1
- //return TRUE, otherwise return FALSE
-    return ((RS232_LineStatusReg >> RS232_LineStatusReg_DataReady) & 1) == 1;
-}
-
 //
 // Remove/flush the UART receiver buffer by removing any unread characters
 //
@@ -98,7 +98,7 @@ void RS232Flush(void)
 {
  // while bit 0 of Line Status Register == ‘1’
  // read unwanted char out of fifo receiver buffer
-    while(((RS232_LineStatusReg >> RS232_LineStatusReg_DataReady) & 1) == 1) {
+    while(RS232TestForReceivedData()) {
         int read = RS232_ReceiverFifo;
         read += 1;
     }
@@ -106,10 +106,9 @@ void RS232Flush(void)
     return; // no more characters so return
 }
 
-int main(void)
-{
-    Init_RS232();
-    RS232Flush();
+int testWrite(void) {
+
+    printf("Starting testWrite.\n");
 
     // 11 Characters + 1 null terminating character
     char word[12] = "Exercise1.3";
@@ -121,16 +120,81 @@ int main(void)
         putcharRS232(word[i]);
     }
 
+    printf("Done testWrite.\n");
+
+    return RS232TestForReceivedData();
+}
+
+int testRead(void) {
+
+    printf("Starting testRead.\n");
+
+    char expected[12] = "Exercise1.3";
+
     char output[12];
     int j;
     for(j = 0; j < 11; j++) {
         output[j] = getcharRS232();
+        if(output[j] != expected[j]) {
+            return 0;
+        }
     }
     output[11] = '\0';
 
     printf("Output is: %s.\n", output);
 
-    printf("Done.\n");
+    printf("Done testRead.\n");
 
+    return 1;
+}
+
+int testFlush(void) {
+
+    printf("Starting testFlush.\n");
+
+    while (RS232TestForReceivedData()) {
+        getcharRS232();
+    }
+
+    putcharRS232('a');
+
+    while(!RS232TestForReceivedData()) {
+        // wait for character to be ready
+    }
+
+    RS232Flush();
+
+    printf("Done testFlush.\n");
+
+    return !RS232TestForReceivedData();
+}
+
+int main(void)
+{
+    Init_RS232();
+    RS232Flush();
+
+    if(!testFlush()) {
+        printf("Failed testFlush.\n");
+        return 0;
+    } else {
+        printf("Passed testFlush.\n");
+    }
+
+    if(!testWrite()) {
+        printf("Failed testWrite.\n");
+        return 0;
+    } else {
+        printf("Passed testWrite.\n");
+    }
+
+    if (!testRead()) {
+        printf("Failed testRead.\n");
+        return 0;
+    } else {
+        printf("Passed testRead.\n");
+    }
+
+    printf("Passed all tests.\n");
     return 0;
 }
