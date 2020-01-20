@@ -39,7 +39,7 @@ module  GraphicsController_Verilog (
 	
 		// WIRES/REGs etc
 
-
+	reg signed [15:0] X_line, Y_line;
 	reg signed [15:0] X1, Y1, X2, Y2, Colour, BackGroundColour, Command;			// registers
 	reg signed [15:0] Colour_Latch;									// holds data read from a pixel
 
@@ -104,6 +104,7 @@ module  GraphicsController_Verilog (
 	parameter ReadPixel1 = 8'h07;							 	// State for reading a pixel
 	parameter ReadPixel2 = 8'h08;							 	// State for reading a pixel
 	parameter PalletteReProgram = 8'h09;					// State for programming a pallette colour
+	parameter LoadCoordinates = 8'h0a;						// State for loading in X1 and Y1 coordinates into X_line and Y_line
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Commands values that can be written to command register by CPU to get graphics controller to draw a shape
@@ -324,7 +325,30 @@ module  GraphicsController_Verilog (
 	always@(posedge Clk) begin
 		if(Colour_Latch_Load_H == 1)
 			Colour_Latch <= Colour_Latch_Data;
-	end		
+	end
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//	X_line and Y_line register update
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(Reset_L == 0) begin
+			X_line <= 0;
+			Y_line <= 0;
+		end else begin
+			
+			if (CurrentState == LoadCoordinates) begin
+				X_line <= X1;
+				Y_line <= Y1;
+			end else if (CurrentState == DrawHLine) begin
+				X_line <= X_line + 1'b1;
+			end else if (CurrentState == DrawVline) begin
+				Y_line <= Y_line + 1'b1;
+			end
+			
+			
+		end 
+	end	
 	
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //	State Machine Registers
@@ -417,9 +441,9 @@ module  GraphicsController_Verilog (
 			else if(Command == ProgramPallette) 
 				NextState = PalletteReProgram;	
 			else if(Command == Hline) 
-				NextState = DrawHLine;	
+				NextState = LoadCoordinates;	
 			else if(Command == Vline) 
-				NextState = DrawVline;
+				NextState = LoadCoordinates;
 			else if(Command == ALine) 
 				NextState = ALine;	
 				
@@ -518,17 +542,50 @@ module  GraphicsController_Verilog (
 		end
 		
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == LoadCoordinates) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			if (Command == Hline)
+				NextState <= DrawHLine;
+			else if (Command == Vline)
+				NextState <= DrawVline;
+		end
+		
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		else if(CurrentState == DrawHLine) begin
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// TODO in your project
-			NextState = Idle;
+			if (X_line >= X2)
+				NextState = Idle;
+			else begin
+			
+				Sig_AddressOut 	= {Y1[8:0], X_line[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(X_line[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+			
+				NextState = DrawHLine;
+			end
 		end
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		else if(CurrentState == DrawVline) begin
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
-			// TODO in your project
-			NextState = Idle;
+			if (Y_line >= Y2)
+				NextState = Idle;
+			else begin
+			
+				Sig_AddressOut 	= {Y_line[8:0], X1[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(X1[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+			
+				NextState = DrawVline;
+			end
 		end
 			
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
