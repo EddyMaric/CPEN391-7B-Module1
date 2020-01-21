@@ -130,6 +130,43 @@ module  GraphicsController_Verilog (
 	reg error_Load_H;
 	reg i_Load_H;
 
+	// Circle drawing algorithm signals
+	reg signed [15:0] centreX;
+	reg signed [15:0] centreX_Data;
+
+	reg signed [15:0] centreY;
+	reg signed [15:0] centreY_Data;
+
+	reg signed [15:0] radius;
+	reg signed [15:0] radius_Data;
+
+	reg signed [15:0] centreXPlusOffsetX;
+	reg signed [15:0] centreXPlusOffsetY;
+	reg signed [15:0] centreXMinusOffsetX;
+	reg signed [15:0] centreXMinusOffsetY;
+
+	reg signed [15:0] centreYPlusOffsetX;
+	reg signed [15:0] centreYPlusOffsetY;
+	reg signed [15:0] centreYMinusOffsetX;
+	reg signed [15:0] centreYMinusOffsetY;
+
+	reg signed [15:0] offset_x;
+	reg signed [15:0] offset_x_Data;
+
+	reg signed [15:0] offset_y;
+	reg signed [15:0] offset_y_Data;
+
+	reg signed [15:0] crit;
+	reg signed [15:0] crit_Data;
+
+	// load enables for circle drawing algorithm registers
+	reg centreX_Load_H;
+	reg centreY_Load_H;
+	reg radius_Load_H;
+	reg offset_x_Load_H;
+	reg offset_y_Load_H;
+	reg crit_Load_H;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // States and Parameters for State machine
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,6 +203,21 @@ module  GraphicsController_Verilog (
 	parameter DrawLineStartErrorLoop = 8'h0e;
 	parameter DrawLineFinishMainLoop = 8'h0f;
 
+	// New states for drawing circle
+	parameter DrawCircle = 8'h10;
+	parameter DrawCircleStartMainLoop = 8'h11;
+	parameter DrawCircleOctant1 = 8'h12;
+	parameter DrawCircleOctant2 = 8'h13;
+	parameter DrawCircleOctant4 = 8'h14;
+	parameter DrawCircleOctant3 = 8'h15;
+	parameter DrawCircleOctant5 = 8'h16;
+	parameter DrawCircleOctant6 = 8'h17;
+	parameter DrawCircleOctant7 = 8'h18;
+	parameter DrawCircleOctant8 = 8'h19;
+	parameter DrawCircleIncreaseOffsetY = 8'h1a;
+	parameter DrawCircleCheckCrit = 8'h1b;
+	parameter DrawCircleEndMainLoop = 8'h1c;
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Commands values that can be written to command register by CPU to get graphics controller to draw a shape
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +228,7 @@ module  GraphicsController_Verilog (
 	parameter PutPixel = 16'h000a;							// command to draw a pixel
 	parameter GetPixel = 16'h000b;							// command to read a pixel
 	parameter ProgramPallette = 16'h0010;					// command is program one of the 256 pallettes with a new RGB value
-	
+	parameter Circle = 16'h0011;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Secondary address decoder within chip
@@ -487,6 +539,60 @@ module  GraphicsController_Verilog (
 			i <= i_Data; // update the register
 	end
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// centreX register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(centreX_Load_H == 1) // if load is active
+			centreX <= centreX_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// centreY register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(centreY_Load_H == 1) // if load is active
+			centreY <= centreY_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// radius register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(radius_Load_H == 1) // if load is active
+			radius <= radius_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// offsetX register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(offset_x_Load_H == 1) // if load is active
+			offset_x <= offset_x_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// offsetY register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(offset_y_Load_H == 1) // if load is active
+			offset_y <= offset_y_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// crit register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(crit_Load_H == 1) // if load is active
+			crit <= crit_Data; // update the register
+	end
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //	State Machine Registers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -542,7 +648,7 @@ module  GraphicsController_Verilog (
 		Sig_ColourPalletteData			= 0;
 		Sig_ColourPallette_WE_H			= 0;
 
-		// HLine and VLine signals
+		// Defaults for HLine and VLine signals
 		X_line_Data <= 0;
 		X_line_Load_H <= 0;
 
@@ -577,8 +683,21 @@ module  GraphicsController_Verilog (
 		i_Data <= 0;
 		i_Load_H <= 0;
 
-		x2Minusx1 <= 0;
-		y2Minusy1 <= 0;
+		// Defaults for circle drawing algorithm
+		centreX_Data <= 0;
+		centreX_Load_H <= 0;
+
+		centreY_Data <= 0;
+		centreY_Load_H <= 0;
+
+		offset_x_Data <= 0;
+		offset_x_Load_H <= 0;
+
+		offset_y_Data <= 0;
+		offset_y_Load_H <= 0;
+
+		crit_Data <= 0;
+		crit_Load_H <= 0;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// IMPORTANT we have to define what the default NEXT state will be. In this case we the state machine
@@ -620,7 +739,9 @@ module  GraphicsController_Verilog (
 			else if(Command == Vline) 
 				NextState = LoadCoordinates;
 			else if(Command == ALine) 
-				NextState = DrawLine;	
+				NextState = DrawLine;
+			else if(Command == Circle)
+				NextState = DrawCircle;
 				
 			// add other code to process any new commands here e.g. draw a circle if you decide to implement that
 			// or draw a rectangle etc
@@ -769,7 +890,7 @@ module  GraphicsController_Verilog (
 			
 				Y_line_Data <= Y_line + 1'b1;
 				Y_line_Load_H <= 1;
-				
+
 				NextState = DrawVline;
 			end
 		end
@@ -782,7 +903,7 @@ module  GraphicsController_Verilog (
 
 			// Store abs(x2-x1) into dx
 			// Store sign(x2-x1) into s1
-			x2Minusx1 <= X2 - X1;
+			x2Minusx1 = X2 - X1;
 			if (x2Minusx1 < 0) begin
 				dx_Data <= -x2Minusx1;
 				s1_Data <= -1;
@@ -796,7 +917,7 @@ module  GraphicsController_Verilog (
 
 			// Store abs(y2-y1) into dy
 			// Store sign(y2-xy) into s2
-			y2Minusy1 <= Y2 - Y1;
+			y2Minusy1 = Y2 - Y1;
 			if (y2Minusy1 < 0) begin
 				dy_Data <= -y2Minusy1;
 				s2_Data <= -1;
@@ -916,6 +1037,209 @@ module  GraphicsController_Verilog (
 				i_Load_H <= 1;
 
 				NextState = DrawLineStartMainLoop;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircle) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				// Set all initial values for circle drawing algorithm
+				centreX_Data <= X1;
+				centreY_Data <= Y1;
+				radius_Data <= X2; // for now, store radius in X2 TODO: Fix this later
+				
+				offset_y_Data <= 0; // offset_y = 0
+				offset_x_Data <= X2; // ofset_x = radius
+				crit_Data <= 1 - X2; // crit = 1 - radiu
+
+				// set load enables
+				centreX_Load_H <= 1;
+				centreY_Load_H <= 1;
+				radius_Data <= 1;
+				offset_y_Load_H <= 1;
+				offset_x_Load_H <= 1;
+				crit_Load_H <= 1;
+
+				NextState = DrawCircleStartMainLoop;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleStartMainLoop) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				if (offset_y > offset_x)
+					NextState = Idle;
+				else begin
+					NextState = DrawCircleOctant1;
+				end
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant1) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXPlusOffsetX = centreX + offset_x;
+				centreYPlusOffsetY = centreY + offset_y;
+
+				Sig_AddressOut 	= {centreYPlusOffsetY[8:0], centreXPlusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXPlusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleOctant2;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant2) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXPlusOffsetY = centreX + offset_y;
+				centreYPlusOffsetX = centreY + offset_x;
+
+				Sig_AddressOut 	= {centreYPlusOffsetX[8:0], centreXPlusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXPlusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleOctant4;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant4) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXMinusOffsetX = centreX - offset_x;
+				centreYPlusOffsetY = centreY + offset_y;
+
+				Sig_AddressOut 	= {centreYPlusOffsetY[8:0], centreXMinusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXMinusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleOctant3;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant3) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXMinusOffsetY = centreX - offset_y;
+				centreYPlusOffsetX = centreY + offset_x;
+
+				Sig_AddressOut 	= {centreYPlusOffsetX[8:0], centreXMinusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXMinusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleOctant5;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant5) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXMinusOffsetX = centreX - offset_x;
+				centreYMinusOffsetY = centreY - offset_y;
+
+				Sig_AddressOut 	= {centreYMinusOffsetY[8:0], centreXMinusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXMinusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleOctant6;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant6) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXMinusOffsetY = centreX - offset_y;
+				centreYMinusOffsetX = centreY - offset_x;
+
+				Sig_AddressOut 	= {centreYMinusOffsetX[8:0], centreXMinusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXMinusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleOctant7;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant7) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXPlusOffsetX = centreX + offset_x;
+				centreYMinusOffsetY = centreY - offset_y;
+
+				Sig_AddressOut 	= {centreYMinusOffsetY[8:0], centreXPlusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXPlusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleOctant8;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleOctant8) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				centreXPlusOffsetY = centreX + offset_y;
+				centreYMinusOffsetX = centreY - offset_x;
+
+				Sig_AddressOut 	= {centreYMinusOffsetX[8:0], centreXPlusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+				Sig_RW_Out			= 0;
+					
+				if(centreXPlusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+				else
+					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+				NextState = DrawCircleIncreaseOffsetY;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleIncreaseOffsetY) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				offset_y_Data <= offset_y + 1'b1;
+				offset_y_Load_H <= 1;
+
+				NextState = DrawCircleCheckCrit;
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleCheckCrit) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				if (crit <= 0) begin
+					crit_Data <= crit + 2*offset_y + 1;
+					crit_Load_H <= 1;
+
+					NextState = DrawCircleStartMainLoop;
+				end else begin
+					offset_x_Data <= offset_x - 1;
+					offset_x_Load_H <= 1;
+
+					NextState = DrawCircleEndMainLoop;
+				end
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawCircleEndMainLoop) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				crit_Data <= crit + 2*(offset_y - offset_x) + 1;
+				crit_Load_H <= 1;
+
+				NextState = DrawCircleStartMainLoop;
 		end
 
 	end

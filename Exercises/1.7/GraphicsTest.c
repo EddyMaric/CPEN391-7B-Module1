@@ -27,6 +27,7 @@
 #define	PutAPixel		0xA
 #define	GetAPixel		0xB
 #define	ProgramPaletteColour    0x10
+#define DrawCircle      0x11
 
 // defined constants representing colours pre-programmed into colour palette
 // there are 256 colours but only 8 are shown below, we write these to the colour registers
@@ -222,6 +223,18 @@ void FilledRectangleWithBorder(int x1, int y1, int width, int height, int border
     FilledRectangle(x1+borderWidth, y1+borderWidth, width-2*borderWidth, height-2*borderWidth, FillColour);
 }
 
+// Draws a circle centered at centreX and centreY
+void Circle(int centreX, int centreY, int radius, int Colour)
+{
+    WAIT_FOR_GRAPHICS;              // is graphics ready for new command
+
+    GraphicsX1Reg = centreX;              // write coords to x1, y1
+    GraphicsY1Reg = centreY;
+    GraphicsX2Reg = radius;             // write radius
+    GraphicsColourReg = Colour;         // set pixel colour
+    GraphicsCommandReg = DrawCircle;         // give graphics "draw line" command
+}
+
 int main(void)
 {
     printf("Starting...\n");
@@ -263,6 +276,9 @@ int main(void)
 
     // Draw a cyan rectangle with a 10px wide white border
     FilledRectangleWithBorder(300, 300, 50, 70, 10, CYAN, WHITE);
+
+    // Draw a circle
+    Circle(250, 250, 50, WHITE);
 
     printf("Done...\n");
     return 0 ;
