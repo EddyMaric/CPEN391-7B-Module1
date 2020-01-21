@@ -38,8 +38,6 @@ module  GraphicsController_Verilog (
 	);
 	
 		// WIRES/REGs etc
-
-	reg signed [15:0] X_line, Y_line;
 	reg signed [15:0] X1, Y1, X2, Y2, Colour, BackGroundColour, Command;			// registers
 	reg signed [15:0] Colour_Latch;									// holds data read from a pixel
 
@@ -79,6 +77,59 @@ module  GraphicsController_Verilog (
 	reg unsigned [31:0] Sig_ColourPalletteData;	// data
 	reg Sig_ColourPallette_WE_H;						// write enable to store new colour pallette data
 
+	// HLine and Vline signals
+	reg signed [15:0] X_line;
+	reg signed [15:0] X_line_Data;
+
+	reg signed [15:0] Y_line;
+	reg signed [15:0] Y_line_Data;
+
+	// load enables for HLine and VLine
+	reg X_line_Load_H;
+	reg Y_line_Load_H;
+
+	// Line drawing algorithm signals
+	reg signed [15:0] x;
+	reg signed [15:0] x_Data;
+
+	reg signed [15:0] y;
+	reg signed [15:0] y_Data;
+
+	reg signed [15:0] dx;
+	reg signed [15:0] dx_Data;
+
+	reg signed [15:0] dy;
+	reg signed [15:0] dy_Data;
+
+	reg signed [15:0] s1;
+	reg signed [15:0] s1_Data;
+
+	reg signed [15:0] s2;
+	reg signed [15:0] s2_Data;
+
+	reg signed [15:0] x2Minusx1;
+	reg signed [15:0] y2Minusy1;
+
+	reg signed [15:0] interchange;
+	reg signed [15:0] interchange_Data;
+
+	reg signed [15:0] error;
+	reg signed [15:0] error_Data;
+
+	reg signed [15:0] i;
+	reg signed [15:0] i_Data;
+
+	// load enables for line drawing algorithm registers
+	reg x_Load_H;
+	reg y_Load_H;
+	reg dx_Load_H;
+	reg dy_Load_H;
+	reg s1_Load_H;
+	reg s2_Load_H;
+	reg interchange_Load_H;
+	reg error_Load_H;
+	reg i_Load_H;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // States and Parameters for State machine
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,8 +155,17 @@ module  GraphicsController_Verilog (
 	parameter ReadPixel1 = 8'h07;							 	// State for reading a pixel
 	parameter ReadPixel2 = 8'h08;							 	// State for reading a pixel
 	parameter PalletteReProgram = 8'h09;					// State for programming a pallette colour
+	
+	// New state for DrawVline and DrawHLine
 	parameter LoadCoordinates = 8'h0a;						// State for loading in X1 and Y1 coordinates into X_line and Y_line
 	
+	// New states for DrawLine
+	parameter DrawLine1 = 8'h0b;
+	parameter DrawLine2 = 8'h0c;
+	parameter DrawLineStartMainLoop = 8'h0d;
+	parameter DrawLineStartErrorLoop = 8'h0e;
+	parameter DrawLineFinishMainLoop = 8'h0f;
+
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Commands values that can be written to command register by CPU to get graphics controller to draw a shape
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,6 +194,7 @@ module  GraphicsController_Verilog (
 		Colour_Select_H 				= 0;
 		BackGroundColour_Select_H 	= 0;
 		Command_Select_H 				= 0;
+
 
 		// Base address of the ARM lightweight bridge is hex FF200000. All registers are this addresss + Offset
 		// if 16 bit Bridge outputs addres in range hex 0000 - 00FF then Graphics chip will be be accessed
@@ -327,29 +388,105 @@ module  GraphicsController_Verilog (
 			Colour_Latch <= Colour_Latch_Data;
 	end
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//	X_line and Y_line register update
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// X_line register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	always@(posedge Clk) begin
-		if(Reset_L == 0) begin
-			X_line <= 0;
-			Y_line <= 0;
-		end else begin
-			
-			if (CurrentState == LoadCoordinates) begin
-				X_line <= X1;
-				Y_line <= Y1;
-			end else if (CurrentState == DrawHLine) begin
-				X_line <= X_line + 1'b1;
-			end else if (CurrentState == DrawVline) begin
-				Y_line <= Y_line + 1'b1;
-			end
-			
-			
-		end 
-	end	
+		if(X_line_Load_H == 1) // if load is active
+			X_line <= X_line_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Y_line register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(Y_line_Load_H == 1) // if load is active
+			Y_line <= Y_line_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// x register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(x_Load_H == 1) // if load is active
+			x <= x_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// y register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(y_Load_H == 1) // if load is active
+			y <= y_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// dx register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(dx_Load_H == 1) // if load is active
+			dx <= dx_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// dy register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(dy_Load_H == 1) // if load is active
+			dy <= dy_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// s1 register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(s1_Load_H == 1) // if load is active
+			s1 <= s1_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// s2 register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(s2_Load_H == 1) // if load is active
+			s2 <= s2_Data; // update the register
+	end
 	
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// interchange register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(interchange_Load_H == 1) // if load is active
+			interchange <= interchange_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// error register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(error_Load_H == 1) // if load is active
+			error <= error_Data; // update the register
+	end
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// i register update
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	always@(posedge Clk) begin
+		if(i_Load_H == 1) // if load is active
+			i <= i_Data; // update the register
+	end
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //	State Machine Registers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -403,7 +540,45 @@ module  GraphicsController_Verilog (
 			
 		Sig_ColourPalletteAddr			= 0;
 		Sig_ColourPalletteData			= 0;
-		Sig_ColourPallette_WE_H			= 0; 
+		Sig_ColourPallette_WE_H			= 0;
+
+		// HLine and VLine signals
+		X_line_Data <= 0;
+		X_line_Load_H <= 0;
+
+		Y_line_Data <= 0;
+		Y_line_Load_H <= 0;
+
+		// Defaults for line drawing algorithm signals
+		x_Data <= 0;
+		x_Load_H <= 0;
+
+		y_Data <= 0;
+		y_Load_H <= 0;
+
+		dx_Data <= 0;
+		dx_Load_H <= 0;
+
+		dy_Data <= 0;
+		dy_Load_H <= 0;
+
+		s1_Data <= 0;
+		s1_Load_H <= 0;
+
+		s2_Data <= 0;
+		s2_Load_H <= 0;
+
+		interchange_Data <= 0;
+		interchange_Load_H <= 0;
+
+		error_Data <= 0;
+		error_Load_H <= 0;
+
+		i_Data <= 0;
+		i_Load_H <= 0;
+
+		x2Minusx1 <= 0;
+		y2Minusy1 <= 0;
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// IMPORTANT we have to define what the default NEXT state will be. In this case we the state machine
@@ -445,7 +620,7 @@ module  GraphicsController_Verilog (
 			else if(Command == Vline) 
 				NextState = LoadCoordinates;
 			else if(Command == ALine) 
-				NextState = ALine;	
+				NextState = DrawLine;	
 				
 			// add other code to process any new commands here e.g. draw a circle if you decide to implement that
 			// or draw a rectangle etc
@@ -544,6 +719,11 @@ module  GraphicsController_Verilog (
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		else if(CurrentState == LoadCoordinates) begin
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			X_line_Data <= X1;
+			Y_line_Data <= Y1;
+			X_line_Load_H <= 1;
+			Y_line_Load_H <= 1;
+
 			if (Command == Hline)
 				NextState <= DrawHLine;
 			else if (Command == Vline)
@@ -564,7 +744,10 @@ module  GraphicsController_Verilog (
 					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
 				else
 					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
-			
+
+				X_line_Data <= X_line + 1'b1;
+				X_line_Load_H <= 1;
+
 				NextState = DrawHLine;
 			end
 		end
@@ -584,6 +767,9 @@ module  GraphicsController_Verilog (
 				else
 					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
 			
+				Y_line_Data <= Y_line + 1'b1;
+				Y_line_Load_H <= 1;
+				
 				NextState = DrawVline;
 			end
 		end
@@ -591,9 +777,147 @@ module  GraphicsController_Verilog (
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		else if(CurrentState == DrawLine) begin
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
-			// TODO in your project
-			NextState = Idle;			
+			x_Data <= X1; // store X1 into x
+			y_Data <= Y1; // store Y1 into y
+
+			// Store abs(x2-x1) into dx
+			// Store sign(x2-x1) into s1
+			x2Minusx1 <= X2 - X1;
+			if (x2Minusx1 < 0) begin
+				dx_Data <= -x2Minusx1;
+				s1_Data <= -1;
+			end else begin
+				dx_Data <= x2Minusx1;
+				if (x2Minusx1 == 0)
+					s1_Data <= 0;
+				else
+					s1_Data <= 1;
+			end
+
+			// Store abs(y2-y1) into dy
+			// Store sign(y2-xy) into s2
+			y2Minusy1 <= Y2 - Y1;
+			if (y2Minusy1 < 0) begin
+				dy_Data <= -y2Minusy1;
+				s2_Data <= -1;
+			end else begin
+				dy_Data <= y2Minusy1;
+				if (y2Minusy1 == 0)
+					s2_Data <= 0;
+				else
+					s2_Data <= 1;
+			end
+
+			interchange_Data <= 0;
+
+			// Set all the load enables for signals we set above
+			x_Load_H <= 1;
+			y_Load_H <= 1;
+			dx_Load_H <= 1;
+			dy_Load_H <= 1;
+			s1_Load_H <= 1;
+			s2_Load_H <= 1;
+			interchange_Load_H <= 1;
+
+			NextState = DrawLine1;			
 		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawLine1) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+			if (dx == 0 && dy == 0) // line of length 0, nothing to draw
+				NextState = Idle;
+			else begin // it is a complex line, so use Bresenham's Algorithm 
+				if(dy > dx) begin // swap delta x and delta y depending on slope of line
+					dx_Data <= dy;
+					dy_Data <= dx;
+					interchange_Data <= 1;
+
+					// Set load enables
+					dx_Load_H <= 1;
+					dy_Load_H <= 1;
+					interchange_Load_H <= 1;
+				end
+
+				NextState = DrawLine2;
+			end			
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawLine2) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				error_Data <= (dy << 1) - dx; // error = (2*dy) - dx
+
+				// Set up counter for main loop
+				i_Data <= 1;
+				
+				// Set load enables
+				error_Load_H <= 1;
+				i_Load_H <= 1;
+
+				NextState = DrawLineStartMainLoop; // start the main loop now
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawLineStartMainLoop) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				if (i > dx) // Finished main loop
+					NextState = Idle;
+				else begin // Write a pixel
+					Sig_AddressOut 	= {y[8:0], x[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(x[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+					NextState = DrawLineStartErrorLoop; // Go the error loop
+				end
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawLineStartErrorLoop) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				if (error < 0) // Finished error loop, complete main loop
+					NextState = DrawLineFinishMainLoop;
+				else begin // Update x or y, and error
+					if (interchange == 1) begin
+						x_Data <= x + s1; // update x
+						x_Load_H <= 1;
+					end else begin
+						y_Data <= y + s2; // update y
+						y_Load_H <= 1;
+					end
+
+					error_Data <= error - (dx << 1); // update error
+					error_Load_H <= 1;
+
+					NextState = DrawLineStartErrorLoop; // Restart error loop
+				end
+		end
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		else if(CurrentState == DrawLineFinishMainLoop) begin
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
+				if (interchange == 1) begin
+					y_Data <= y + s2; // update y
+					y_Load_H <= 1;
+				end else begin
+					x_Data <= x + s1; // update x
+					x_Load_H <= 1;
+				end
+
+				error_Data <= error + (dy << 1);
+				error_Load_H <= 1;
+
+				// increment i for start of main loop
+				i_Data <= i + 1'b1;
+				i_Load_H <= 1;
+
+				NextState = DrawLineStartMainLoop;
+		end
+
 	end
 endmodule
 

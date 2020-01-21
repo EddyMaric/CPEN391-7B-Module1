@@ -23,7 +23,7 @@
 
 #define DrawHLine		1
 #define DrawVLine		2
-#define DrawLine			3
+#define DrawLine		3
 #define	PutAPixel		0xA
 #define	GetAPixel		0xB
 #define	ProgramPaletteColour    0x10
@@ -96,9 +96,7 @@ void ProgramPalette(int PaletteNumber, int RGB)
     GraphicsCommandReg = ProgramPaletteColour; // issue command
 }
 
-/********************************************************************************************* This function draw a horizontal line, 1 pixel at a time starting at the x,y coords specified
-*********************************************************************************************/
-
+// Draw a horizontal line from (x1,y1) to (x1+length-1, y1) of colour Colour
 void HLine(int x1, int y1, int length, int Colour)
 {
     // Deal with no length or negative length
@@ -133,9 +131,7 @@ void HLine(int x1, int y1, int length, int Colour)
     GraphicsCommandReg = DrawHLine;         // give graphics "draw horizontal line" command
 }
 
-/********************************************************************************************* This function draw a vertical line, 1 pixel at a time starting at the x,y coords specified
-*********************************************************************************************/
-
+// Draw a vertical line from (x1,y1) to (x1, y1+length-1) of colour Colour
 void VLine(int x1, int y1, int length, int Colour)
 {
     // Deal with no length or negative length
@@ -158,7 +154,7 @@ void VLine(int x1, int y1, int length, int Colour)
         }
     }
 
-    int y2 = y1 + length - 1; // We don't write to coordinate (x1,y2), but use it as a stopping point instead
+    int y2 = y1 + length; // We don't write to coordinate (x1,y2), but use it as a stopping point instead
 
     WAIT_FOR_GRAPHICS;              // is graphics ready for new command
 
@@ -170,83 +166,60 @@ void VLine(int x1, int y1, int length, int Colour)
     GraphicsCommandReg = DrawVLine;         // give graphics "draw vertical line" command
 }
 
-/*******************************************************************************
-** Implementation of Bresenhams line drawing algorithm
-*******************************************************************************/
-int abs(int a)
-{
-    if(a < 0)
-        return -a ;
-    else
-        return a ;
-}
-
-int sign(int a)
-{
-    if(a < 0)
-        return -1 ;
-    else if (a == 0)
-        return 0 ;
-    else
-        return 1 ;
-}
-
-
-
+// Draw a line from (x1,y1) to (x2,y2) of colour Colour
 void Line(int x1, int y1, int x2, int y2, int Colour)
 {
-    int x = x1;
-    int y = y1;
-    int dx = abs(x2 - x1);
-    int dy = abs(y2 - y1);
+    WAIT_FOR_GRAPHICS;              // is graphics ready for new command
 
-    int s1 = sign(x2 - x1);
-    int s2 = sign(y2 - y1);
-    int i, temp, interchange = 0, error ;
+    GraphicsX1Reg = x1;              // write coords to x1, y1, and x2, y2
+    GraphicsY1Reg = y1;
+    GraphicsX2Reg = x2;
+    GraphicsY2Reg = y2;
+    GraphicsColourReg = Colour;         // set pixel colour
+    GraphicsCommandReg = DrawLine;         // give graphics "draw line" command
+}
 
-// if x1=x2 and y1=y2 then it is a line of zero length so we are done
+// Draw a triangle of colour Colour that connects points (x1,y1), (x2,y2), and (x3, y3)
+void Triangle(int x1, int y1, int x2, int y2, int x3, int y3, int Colour)
+{
+    Line(x1, y1, x2, y2, Colour);
+    Line(x2, y2, x3, y3, Colour);
+    Line(x3, y3, x1, y1, Colour);
+}
 
-    if(dx == 0 && dy == 0)
-        return ;
+// Draw a rectangle of colour Colour with a top left coordinate of (x1,y1) that is width pixels wide and height pixels tall
+// The rectangle will be empty instead of filled
+void Rectangle(int x1, int y1, int width, int height, int Colour)
+{
+    HLine(x1, y1, width, Colour);
+    HLine(x1, y1+height-1, width, Colour);
+    VLine(x1, y1, height, Colour);
+    VLine(x1+width-1, y1, height, Colour);
+}
 
- // must be a complex line so use Bresenhams algorithm
-    else    {
-
-// swap delta x and delta y depending upon slop of line
-
-        if(dy > dx) {
-            temp = dx ;
-            dx = dy ;
-            dy = temp ;
-            interchange = 1 ;
-        }
-
-// initialise the error term to compensate for non-zero intercept
-
-        error = (dy << 1) - dx ;    // error = (2 * dy) - dx
-
-// main loop
-        for(i = 1; i <= dx; i++)    {
-            WriteAPixel(x, y, Colour);
-
-            while(error >= 0)   {
-                if(interchange == 1)
-                    x += s1 ;
-                else
-                    y += s2 ;
-
-                error -= (dx << 1) ;    // error = error - (dx * 2)
-            }
-
-            if(interchange == 1)
-                y += s2 ;
-            else
-                x += s1 ;
-
-            error += (dy << 1) ;    // error = error + (dy * 2)
-
-        }
+// Draw a rectangle of colour Colour with a top left coordinate of (x1,y1) that is width pixels wide and height pixels tall
+// The rectangle will be filled, instead of being empty
+void FilledRectangle(int x1, int y1, int width, int height, int Colour)
+{
+    int i;
+    for(i=y1; i < y1+height; i++) {
+        HLine(x1, i, width, Colour);
     }
+}
+
+// Draw a rectangle with a top left coordinate of (x1,y1) that is width pixels wide and height pixels tall
+// The rectangle will be filled with the colour Colour, instead of being empty
+// The rectangle will have a border of width borderWidth and the border will have a colour of BorderColour
+void FilledRectangleWithBorder(int x1, int y1, int width, int height, int borderWidth, int FillColour, int BorderColour)
+{
+    // Draw Border
+    FilledRectangle(x1, y1, width, borderWidth, BorderColour); //Top
+    FilledRectangle(x1, y1+height-borderWidth, width, borderWidth, BorderColour); //Bottom
+    FilledRectangle(x1, y1, borderWidth, height, BorderColour); //Left
+    FilledRectangle(x1+width-borderWidth, y1, borderWidth, height, BorderColour); //Right
+
+    // Fill in
+    FilledRectangle(x1+borderWidth, y1+borderWidth, width-2*borderWidth, height-2*borderWidth, FillColour);
 }
 
 int main(void)
@@ -263,8 +236,33 @@ int main(void)
     HLine(150, 299, 150, BLUE);
     VLine(150, 150, 150, MAGENTA);
 
-    // Draw a yellow dot in the middle of the box
-    WriteAPixel(225, 225, YELLOW);
+    // Draw a cyan X inside the box
+    Line(170,170, 279, 279, CYAN);
+    Line(170,279, 279, 170, CYAN);
+
+    // Draw another box 20 pixels to the right of the other box using Line instead of HLine and VLine
+    Line(329, 150, 478, 150, RED);
+    Line(478, 150, 478, 299, LIME);
+    Line(329, 299, 478, 299, BLUE);
+    Line(329, 150, 329, 299, MAGENTA);
+
+    // Draw 4 red dots inside the new box using WriteAPixel
+    WriteAPixel(402, 223, RED);
+    WriteAPixel(404, 223, RED);
+    WriteAPixel(402, 225, RED);
+    WriteAPixel(404, 225, RED);
+
+    // Draw a blue triangle
+    Triangle(10, 10, 40, 40, 60, 20, BLUE);
+
+    // Draw a yellow rectangle
+    Rectangle(20, 300, 90, 20, YELLOW);
+
+    // Draw a red solid rectangle
+    FilledRectangle(300, 10, 200, 100, RED);
+
+    // Draw a cyan rectangle with a 10px wide white border
+    FilledRectangleWithBorder(300, 300, 50, 70, 10, CYAN, WHITE);
 
     printf("Done...\n");
     return 0 ;
