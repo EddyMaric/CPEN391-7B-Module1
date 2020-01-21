@@ -105,26 +105,6 @@ void ProgramPalette(int PaletteNumber, int RGB)
 // Draw a horizontal line from (x1,y1) to (x1+length-1, y1) of colour Colour
 void HLine(int x1, int y1, int length, int Colour)
 {
-    // Deal with no length or negative length
-    if (length <= 0) {
-        return;
-    }
-
-    // Deal with negative y
-    if (y1 < 0) {
-        return;
-    }
-
-    // Deal with negative x
-    if (x1 < 0) {
-        if (x1 + length <= 0) {
-            return;
-        } else {
-            x1 = 0;
-            length -= -x1;
-        }
-    }
-
 	int x2 = x1 + length; // We don't write to coordinate (x2,y1), but use it as a stopping point instead
 
     WAIT_FOR_GRAPHICS;              // is graphics ready for new command
@@ -140,26 +120,6 @@ void HLine(int x1, int y1, int length, int Colour)
 // Draw a vertical line from (x1,y1) to (x1, y1+length-1) of colour Colour
 void VLine(int x1, int y1, int length, int Colour)
 {
-    // Deal with no length or negative length
-    if (length <= 0) {
-        return;
-    }
-
-    // Deal with negative x
-    if (x1 < 0) {
-        return;
-    }
-
-    // Deal with negative y
-    if (y1 < 0) {
-        if (y1 + length <= 0) {
-            return;
-        } else {
-            y1 = 0;
-            length -= -y1;
-        }
-    }
-
     int y2 = y1 + length; // We don't write to coordinate (x1,y2), but use it as a stopping point instead
 
     WAIT_FOR_GRAPHICS;              // is graphics ready for new command
@@ -265,7 +225,7 @@ void DrawRandomShape(void) {
         int x2 = rand()%WIDTH;
         int y2 = rand()%HEIGHT;
         Line(x1, y1, x2, y2, colour);
-    } else if (randomShape == 3) { // Triangle
+    } /*else if (randomShape == 3) { // Triangle
         int x2 = rand()%WIDTH;
         int y2 = rand()%HEIGHT;
         int x3 = rand()%WIDTH;
@@ -292,17 +252,26 @@ void DrawRandomShape(void) {
         } while (borderColour == colour);
 
         FilledRectangleWithBorder(x1, y1, width, height, borderWidth, colour, borderColour);
-    } else if (randomShape == 7) { // Circle
+    } */ else if (randomShape == 7) { // Circle
         int radius = rand()%(WIDTH/2);
         Circle(x1, y1, radius, colour);
-    } else { // Filled Circle
+    } /*else { // Filled Circle
         int radius = rand()%(WIDTH/2);
         FilledCircle(x1, y1, radius, colour);
-    }
+    } */
+}
+
+void FillScreen(int Colour)
+{
+    FilledRectangle(0,0,WIDTH,HEIGHT,Colour);
 }
 
 int main(void)
 {
+    printf("Clearing screen..\n");
+
+    FillScreen(BLACK);
+
     printf("Starting...\n");
 
     /*
@@ -351,8 +320,10 @@ int main(void)
     FilledCircle(250, 50, 30, YELLOW); */
 
     // Draw random things on the screen
-    while (1) {
+    int i = 0;
+    while (i < 100) {
         DrawRandomShape();
+        i++;
     }
 
     printf("Done...\n");

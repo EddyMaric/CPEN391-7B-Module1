@@ -1,5 +1,5 @@
 Flow report for CPEN391_Project
-Mon Jan 20 20:05:11 2020
+Tue Jan 21 13:21:24 2020
 Quartus II 64-Bit Version 15.0.0 Build 145 04/22/2015 SJ Full Version
 
 
@@ -41,15 +41,15 @@ agreement for further details.
 +-------------------------------------------------------------------------------+
 ; Flow Summary                                                                  ;
 +---------------------------------+---------------------------------------------+
-; Flow Status                     ; Successful - Mon Jan 20 20:02:35 2020       ;
+; Flow Status                     ; Successful - Tue Jan 21 13:19:30 2020       ;
 ; Quartus II 64-Bit Version       ; 15.0.0 Build 145 04/22/2015 SJ Full Version ;
 ; Revision Name                   ; CPEN391_Project                             ;
 ; Top-level Entity Name           ; MyComputer_Verilog                          ;
 ; Family                          ; Cyclone V                                   ;
 ; Device                          ; 5CSEMA5F31C6                                ;
 ; Timing Models                   ; Final                                       ;
-; Logic utilization (in ALMs)     ; 6,825 / 32,070 ( 21 % )                     ;
-; Total registers                 ; 8405                                        ;
+; Logic utilization (in ALMs)     ; 6,931 / 32,070 ( 22 % )                     ;
+; Total registers                 ; 8463                                        ;
 ; Total pins                      ; 338 / 457 ( 74 % )                          ;
 ; Total virtual pins              ; 0                                           ;
 ; Total block memory bits         ; 3,183,232 / 4,065,280 ( 78 % )              ;
@@ -68,7 +68,7 @@ agreement for further details.
 +-------------------+---------------------+
 ; Option            ; Setting             ;
 +-------------------+---------------------+
-; Start date & time ; 01/20/2020 19:50:09 ;
+; Start date & time ; 01/21/2020 13:06:35 ;
 ; Main task         ; Compilation         ;
 ; Revision Name     ; CPEN391_Project     ;
 +-------------------+---------------------+
@@ -79,7 +79,7 @@ agreement for further details.
 +-------------------------------------+--------------------------------------------------------------------------------+-----------------+-------------------------------------------+------------+
 ; Assignment Name                     ; Value                                                                          ; Default Value   ; Entity Name                               ; Section Id ;
 +-------------------------------------+--------------------------------------------------------------------------------+-----------------+-------------------------------------------+------------+
-; COMPILER_SIGNATURE_ID               ; 1095412822798.157957860209408                                                  ; --              ; --                                        ; --         ;
+; COMPILER_SIGNATURE_ID               ; 1095412822798.157964078607688                                                  ; --              ; --                                        ; --         ;
 ; HPS_ISW_FILE                        ; CPEN391_Computer/synthesis/submodules/sequencer/alt_types.pre.h                ; --              ; CPEN391_Computer_ARM_A9_HPS_hps_io_border ; --         ;
 ; HPS_ISW_FILE                        ; CPEN391_Computer/synthesis/submodules/sequencer/emif.pre.xml                   ; --              ; CPEN391_Computer_ARM_A9_HPS_hps_io_border ; --         ;
 ; HPS_ISW_FILE                        ; CPEN391_Computer/synthesis/submodules/sequencer/sdram_io.pre.h                 ; --              ; CPEN391_Computer_ARM_A9_HPS_hps_io_border ; --         ;
@@ -136,11 +136,11 @@ agreement for further details.
 +---------------------------+--------------+-------------------------+---------------------+------------------------------------+
 ; Module Name               ; Elapsed Time ; Average Processors Used ; Peak Virtual Memory ; Total CPU Time (on all processors) ;
 +---------------------------+--------------+-------------------------+---------------------+------------------------------------+
-; Analysis & Synthesis      ; 00:01:51     ; 2.1                     ; 5405 MB             ; 00:03:50                           ;
-; Fitter                    ; 00:06:29     ; 2.1                     ; 8266 MB             ; 00:11:14                           ;
-; Assembler                 ; 00:00:44     ; 1.0                     ; 5109 MB             ; 00:00:39                           ;
-; TimeQuest Timing Analyzer ; 00:02:33     ; 1.9                     ; 6348 MB             ; 00:04:26                           ;
-; Total                     ; 00:11:37     ; --                      ; --                  ; 00:20:09                           ;
+; Analysis & Synthesis      ; 00:02:16     ; 2.0                     ; 5482 MB             ; 00:04:23                           ;
+; Fitter                    ; 00:06:49     ; 1.9                     ; 8358 MB             ; 00:10:15                           ;
+; Assembler                 ; 00:00:29     ; 1.0                     ; 5110 MB             ; 00:00:27                           ;
+; TimeQuest Timing Analyzer ; 00:01:51     ; 2.0                     ; 6353 MB             ; 00:03:13                           ;
+; Total                     ; 00:11:25     ; --                      ; --                  ; 00:18:18                           ;
 +---------------------------+--------------+-------------------------+---------------------+------------------------------------+
 
 

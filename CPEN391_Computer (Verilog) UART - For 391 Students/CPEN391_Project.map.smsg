@@ -1,4 +1,4 @@
-Warning (10268): Verilog HDL information at GraphicsController_Verilog.v(633): always construct contains both blocking and non-blocking assignments
+Warning (10268): Verilog HDL information at GraphicsController_Verilog.v(639): always construct contains both blocking and non-blocking assignments
 Info (10281): Verilog HDL Declaration information at CPEN391_Computer_mm_interconnect_1_router_001.sv(48): object "DEFAULT_WR_CHANNEL" differs only in case from object "default_wr_channel" in the same scope
 Info (10281): Verilog HDL Declaration information at CPEN391_Computer_mm_interconnect_1_router_001.sv(49): object "DEFAULT_RD_CHANNEL" differs only in case from object "default_rd_channel" in the same scope
 Info (10281): Verilog HDL Declaration information at CPEN391_Computer_mm_interconnect_1_router.sv(48): object "DEFAULT_WR_CHANNEL" differs only in case from object "default_wr_channel" in the same scope

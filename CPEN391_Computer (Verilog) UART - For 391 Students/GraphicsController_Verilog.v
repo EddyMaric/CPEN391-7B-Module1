@@ -36,6 +36,12 @@ module  GraphicsController_Verilog (
 		output reg unsigned [23:0] ColourPalletteData,			// 24 bit 00RRGGBB value to write to the colour pallette
 		output reg ColourPallette_WE_H								// signal to actually write to colour pallette (data and address must be valid at this time)
 	);
+
+	// CONSTANTS
+	parameter MIN_X = 0;
+	parameter MAX_X = 799;
+	parameter MIN_Y = 0;
+	parameter MAX_Y = 479;
 	
 		// WIRES/REGs etc
 	reg signed [15:0] X1, Y1, X2, Y2, Colour, BackGroundColour, Command;			// registers
@@ -854,7 +860,7 @@ module  GraphicsController_Verilog (
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		else if(CurrentState == DrawHLine) begin
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			if (X_line >= X2)
+			if (X_line >= X2 || X_line < MIN_X || X_line > MAX_X || Y_line < MIN_Y || Y_line > MAX_Y)
 				NextState = Idle;
 			else begin
 			
@@ -876,7 +882,7 @@ module  GraphicsController_Verilog (
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		else if(CurrentState == DrawVline) begin
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////		
-			if (Y_line >= Y2)
+			if (Y_line >= Y2 || X_line < MIN_X || X_line > MAX_X || Y_line < MIN_Y || Y_line > MAX_Y)
 				NextState = Idle;
 			else begin
 			
@@ -985,13 +991,18 @@ module  GraphicsController_Verilog (
 				if (i > dx) // Finished main loop
 					NextState = Idle;
 				else begin // Write a pixel
-					Sig_AddressOut 	= {y[8:0], x[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-					Sig_RW_Out			= 0;
-						
-					if(x[0] == 1'b0)										// if the address/pixel is an even numbered one
-						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-					else
-						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+
+					if (!(x < MIN_X || x > MAX_X || y < MIN_Y || y > MAX_Y)) begin
+						Sig_AddressOut 	= {y[8:0], x[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+						Sig_RW_Out			= 0;
+							
+						if(x[0] == 1'b0)										// if the address/pixel is an even numbered one
+							Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+						else
+							Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+					end
+
+					
 
 					NextState = DrawLineStartErrorLoop; // Go the error loop
 				end
@@ -1078,14 +1089,16 @@ module  GraphicsController_Verilog (
 				centreXPlusOffsetX = centreX + offset_x;
 				centreYPlusOffsetY = centreY + offset_y;
 
-				Sig_AddressOut 	= {centreYPlusOffsetY[8:0], centreXPlusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXPlusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
-
+				if(!(centreXPlusOffsetX < MIN_X || centreXPlusOffsetX > MAX_X || centreYPlusOffsetY < MIN_Y || centreYPlusOffsetY > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYPlusOffsetY[8:0], centreXPlusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXPlusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
+				
 				NextState = DrawCircleOctant2;
 		end
 
@@ -1095,13 +1108,15 @@ module  GraphicsController_Verilog (
 				centreXPlusOffsetY = centreX + offset_y;
 				centreYPlusOffsetX = centreY + offset_x;
 
-				Sig_AddressOut 	= {centreYPlusOffsetX[8:0], centreXPlusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXPlusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				if(!(centreXPlusOffsetY < MIN_X || centreXPlusOffsetY > MAX_X || centreYPlusOffsetX < MIN_Y || centreYPlusOffsetX > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYPlusOffsetX[8:0], centreXPlusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXPlusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
 
 				NextState = DrawCircleOctant4;
 		end
@@ -1112,13 +1127,15 @@ module  GraphicsController_Verilog (
 				centreXMinusOffsetX = centreX - offset_x;
 				centreYPlusOffsetY = centreY + offset_y;
 
-				Sig_AddressOut 	= {centreYPlusOffsetY[8:0], centreXMinusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXMinusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				if(!(centreXMinusOffsetX < MIN_X || centreXMinusOffsetX > MAX_X || centreYPlusOffsetY < MIN_Y || centreYPlusOffsetY > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYPlusOffsetY[8:0], centreXMinusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXMinusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
 
 				NextState = DrawCircleOctant3;
 		end
@@ -1129,13 +1146,15 @@ module  GraphicsController_Verilog (
 				centreXMinusOffsetY = centreX - offset_y;
 				centreYPlusOffsetX = centreY + offset_x;
 
-				Sig_AddressOut 	= {centreYPlusOffsetX[8:0], centreXMinusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXMinusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				if(!(centreXMinusOffsetY < MIN_X || centreXMinusOffsetY > MAX_X || centreYPlusOffsetX < MIN_Y || centreYPlusOffsetX > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYPlusOffsetX[8:0], centreXMinusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXMinusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
 
 				NextState = DrawCircleOctant5;
 		end
@@ -1146,13 +1165,15 @@ module  GraphicsController_Verilog (
 				centreXMinusOffsetX = centreX - offset_x;
 				centreYMinusOffsetY = centreY - offset_y;
 
-				Sig_AddressOut 	= {centreYMinusOffsetY[8:0], centreXMinusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXMinusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				if(!(centreXMinusOffsetX < MIN_X || centreXMinusOffsetX > MAX_X || centreYMinusOffsetY < MIN_Y || centreYMinusOffsetY > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYMinusOffsetY[8:0], centreXMinusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXMinusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
 
 				NextState = DrawCircleOctant6;
 		end
@@ -1163,13 +1184,15 @@ module  GraphicsController_Verilog (
 				centreXMinusOffsetY = centreX - offset_y;
 				centreYMinusOffsetX = centreY - offset_x;
 
-				Sig_AddressOut 	= {centreYMinusOffsetX[8:0], centreXMinusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXMinusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				if(!(centreXMinusOffsetY < MIN_X || centreXMinusOffsetY > MAX_X || centreYMinusOffsetX < MIN_Y || centreYMinusOffsetX > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYMinusOffsetX[8:0], centreXMinusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXMinusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
 
 				NextState = DrawCircleOctant7;
 		end
@@ -1180,13 +1203,15 @@ module  GraphicsController_Verilog (
 				centreXPlusOffsetX = centreX + offset_x;
 				centreYMinusOffsetY = centreY - offset_y;
 
-				Sig_AddressOut 	= {centreYMinusOffsetY[8:0], centreXPlusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXPlusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				if(!(centreXPlusOffsetX < MIN_X || centreXPlusOffsetX > MAX_X || centreYMinusOffsetY < MIN_Y || centreYMinusOffsetY > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYMinusOffsetY[8:0], centreXPlusOffsetX[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXPlusOffsetX[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
 
 				NextState = DrawCircleOctant8;
 		end
@@ -1197,14 +1222,15 @@ module  GraphicsController_Verilog (
 				centreXPlusOffsetY = centreX + offset_y;
 				centreYMinusOffsetX = centreY - offset_x;
 
-				Sig_AddressOut 	= {centreYMinusOffsetX[8:0], centreXPlusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
-				Sig_RW_Out			= 0;
-					
-				if(centreXPlusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
-					Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
-				else
-					Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
-
+				if(!(centreXPlusOffsetY < MIN_X || centreXPlusOffsetY > MAX_X || centreYMinusOffsetX < MIN_Y || centreYMinusOffsetX > MAX_Y)) begin
+					Sig_AddressOut 	= {centreYMinusOffsetX[8:0], centreXPlusOffsetY[9:1]};		// 8 bit X address even though it goes up to 1024 which would mean 10 bits, because each address = 2 pixles/bytes
+					Sig_RW_Out			= 0;
+						
+					if(centreXPlusOffsetY[0] == 1'b0)										// if the address/pixel is an even numbered one
+						Sig_UDS_Out_L 	= 0;								// enable write to upper half of Sram data bus
+					else
+						Sig_LDS_Out_L 	= 0;								// else write to lower half of Sram data bus
+				end
 				NextState = DrawCircleIncreaseOffsetY;
 		end
 
