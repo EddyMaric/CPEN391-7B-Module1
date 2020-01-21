@@ -1,4 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+
+// Size of screen
+#define WIDTH 800
+#define HEIGHT 480
 
 // graphics register addresses
 
@@ -235,10 +240,72 @@ void Circle(int centreX, int centreY, int radius, int Colour)
     GraphicsCommandReg = DrawCircle;         // give graphics "draw line" command
 }
 
+void FilledCircle(int centreX, int centreY, int radius, int Colour)
+{
+    int i;
+    for(i = 1; i <= radius; i++) {
+        Circle(centreX, centreY, i, Colour);
+    }
+}
+
+void DrawRandomShape(void) {
+    int randomShape = rand() % 9; // 9 shapes in total
+
+    int x1 = rand()%WIDTH;
+    int y1 = rand()%HEIGHT;
+    int colour = rand()%8; // 8 colours in total
+
+    if (randomShape == 0) { // Horizontal Line 
+        int length = rand()%(WIDTH - x1);
+        HLine(x1, y1, length, colour);
+    } else if (randomShape == 1) { // Vertical Line
+        int length = rand()%(HEIGHT-y1);
+        VLine(x1, y1, length, colour);
+    } else if (randomShape == 2) { // Line
+        int x2 = rand()%WIDTH;
+        int y2 = rand()%HEIGHT;
+        Line(x1, y1, x2, y2, colour);
+    } else if (randomShape == 3) { // Triangle
+        int x2 = rand()%WIDTH;
+        int y2 = rand()%HEIGHT;
+        int x3 = rand()%WIDTH;
+        int y3 = rand()%HEIGHT;
+        Triangle(x1, y1, x2, y2, x3, y3, colour);
+    } else if (randomShape == 4) { // Rectangle
+        int width = rand()%(WIDTH - x1);
+        int height = rand()%(HEIGHT - y1);
+        Rectangle(x1, y1, width, height, colour);
+    } else if (randomShape == 5) { // Filled Rectangle
+        int width = rand()%(WIDTH - x1);
+        int height = rand()%(HEIGHT - y1);
+        FilledRectangle(x1, y1, width, height, colour);
+    } else if (randomShape == 6) { // Filled Rectangle With Border
+        int width = rand()%(WIDTH - x1);
+        int height = rand()%(HEIGHT - y1);
+        
+        int min_dimension = width < height ? width : height;
+        int borderWidth = rand()%min_dimension;
+        
+        int borderColour;
+        do {
+            borderColour = rand()%8;
+        } while (borderColour == colour);
+
+        FilledRectangleWithBorder(x1, y1, width, height, borderWidth, colour, borderColour);
+    } else if (randomShape == 7) { // Circle
+        int radius = rand()%(WIDTH/2);
+        Circle(x1, y1, radius, colour);
+    } else { // Filled Circle
+        int radius = rand()%(WIDTH/2);
+        FilledCircle(x1, y1, radius, colour);
+    }
+}
+
 int main(void)
 {
     printf("Starting...\n");
 
+    /*
     // Draw a box where:
     // the top line is red
     // right line is lime
@@ -279,6 +346,14 @@ int main(void)
 
     // Draw a circle
     Circle(250, 250, 50, WHITE);
+
+    // Draw a filled circle
+    FilledCircle(250, 50, 30, YELLOW); */
+
+    // Draw random things on the screen
+    while (1) {
+        DrawRandomShape();
+    }
 
     printf("Done...\n");
     return 0 ;
