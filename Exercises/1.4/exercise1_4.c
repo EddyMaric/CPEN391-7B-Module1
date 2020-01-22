@@ -40,22 +40,25 @@
 void Init_RS232(void)
 {
  // set bit 7 of Line Control Register to 1, to gain access to the baud rate registers
-    RS232_LineControlReg = (1 << RS232_LineControlReg_DivisorLatchAccessBit);
+    RS232_LineControlReg = 0x80;
 
  // set Divisor latch (LSB and MSB) with correct value for required baud rate
-    int baud_rate_divisor_value = BRClkFrequency / (DesiredBaudrate * 16);
-    RS232_DivisorLatchLSB = baud_rate_divisor_value & 0xffff ;
-    RS232_DivisorLatchMSB = baud_rate_divisor_value >> 8;
+    // This is for baudrate of 9600
+    RS232_DivisorLatchLSB = 0x45; // Paul Davies told me to do this idk what these constants mean
+    RS232_DivisorLatchMSB = 0x01;
+
+ // Reset bits to 0
+    RS232_LineControlReg = 0x0;
 
  // set bit 7 of Line control register back to 0 and
  // program other bits in that reg for 8 bit data, 1 stop bit, no parity etc
-    RS232_LineControlReg = (1 << RS232_LineControlReg_WordLengthSelect0) + (1 << RS232_LineControlReg_WordLengthSelect0);
+    RS232_LineControlReg = 0x03;
 
  // Reset the Fifo’s in the FiFo Control Reg by setting bits 1 & 2
-    RS232_FifoControlReg = (1 << RS232_FifoControlReg_ReceiveFIFOReset) + (1 << RS232_FifoControlReg_TransmitFIFOReset);
+    RS232_FifoControlReg = 0x06;
 
  // Now Clear all bits in the FiFo control registers
-    RS232_FifoControlReg = 0;
+    RS232_FifoControlReg = 0x0;
 }
 
 // the following function polls the UART to determine if any character
@@ -72,7 +75,7 @@ int putcharRS232(int c)
 {
  // wait for Transmitter Holding Register bit (5) of line status register to be '1'
  // indicating we can write to the device
-    while (((RS232_LineStatusReg >> RS232_LineStatusReg_TransmitterHoldingRegister) & 1) == 0) {
+    while (RS232_LineStatusReg & 0x20 != 0x20) {
     }
 
  // write character to Transmitter fifo register
@@ -187,17 +190,13 @@ void Init_Touch(void)
 
 	// Send the touch enable command
 	putcharRS232(0x55);
-	printf("Put first char\n");
 	putcharRS232(0x1);
-	printf("Put second char\n");
 	putcharRS232(0x12);
-	printf("Put third char\n");
 
-	int i = 0;
-	printf("Got byte %d: %x\n", i++, getcharRS232());
-	printf("Got byte %d: %x\n", i++, getcharRS232());
-	printf("Got byte %d: %x\n", i++, getcharRS232());
-	printf("Got byte %d: %x\n", i++, getcharRS232());
+    getcharRS232();
+	getcharRS232();
+	getcharRS232();
+	getcharRS232();
 }
 
 
@@ -247,7 +246,6 @@ void Init_Touch(void)
 int main(void)
 {
     Init_RS232();
-    RS232Flush();
     Init_Touch();
 
     printf("Done.\n");

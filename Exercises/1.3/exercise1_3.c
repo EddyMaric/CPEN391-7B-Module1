@@ -41,9 +41,9 @@ void Init_RS232(void)
     RS232_LineControlReg = (1 << RS232_LineControlReg_DivisorLatchAccessBit);
 
  // set Divisor latch (LSB and MSB) with correct value for required baud rate
-    int baud_rate_divisor_value = BRClkFrequency / (DesiredBaudrate * 16);
-    RS232_DivisorLatchLSB = baud_rate_divisor_value & 0xffff ;
-    RS232_DivisorLatchMSB = baud_rate_divisor_value >> 8;
+    // This is for baudrate of 9600
+    RS232_DivisorLatchLSB = 0x45; // Paul Davies told me to do this idk what these constants mean
+    RS232_DivisorLatchMSB = 0x01;
 
  // set bit 7 of Line control register back to 0 and
  // program other bits in that reg for 8 bit data, 1 stop bit, no parity etc

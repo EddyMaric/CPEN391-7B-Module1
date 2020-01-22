@@ -176,12 +176,12 @@ void Init_RS232(void)
      268:	e5c32206 	strb	r2, [r3, #518]	; 0x206
 
  // set Divisor latch (LSB and MSB) with correct value for required baud rate
-    int baud_rate_divisor_value = BRClkFrequency / (DesiredBaudrate * 16);
-    RS232_DivisorLatchLSB = baud_rate_divisor_value & 0xffff ;
-     26c:	e3a02045 	mov	r2, #69	; 0x45
+    // This is for baudrate of 9600
+    RS232_DivisorLatchLSB = 0x450; // Paul Davies told me to do this idk what these constants mean
+     26c:	e3a02050 	mov	r2, #80	; 0x50
      270:	e5c32200 	strb	r2, [r3, #512]	; 0x200
-    RS232_DivisorLatchMSB = baud_rate_divisor_value >> 8;
-     274:	e3a02001 	mov	r2, #1
+    RS232_DivisorLatchMSB = 0x010;
+     274:	e3a02010 	mov	r2, #16
      278:	e5c32202 	strb	r2, [r3, #514]	; 0x202
 
  // set bit 7 of Line control register back to 0 and
